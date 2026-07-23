@@ -41,6 +41,19 @@ public class Postagem {
 	@ManyToOne // Relação muitos para um 
 	@JsonIgnoreProperties("postagem") // impede loops infinitos na serialização de objetos para JSON, ocultando o atributo especificado.
 	private Tema tema;
+	
+	@ManyToOne // Relação muitos para um 
+	@JsonIgnoreProperties("postagem") // impede loops infinitos na serialização de objetos para JSON, ocultando o atributo especificado.
+	private Usuario usuario;
+	
+
+	public Usuario getUsuario() {
+		return usuario;
+	}
+
+	public void setUsuario(Usuario usuario) {
+		this.usuario = usuario;
+	}
 
 	public Long getId() {
 		return id;
