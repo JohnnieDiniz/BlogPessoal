@@ -32,145 +32,143 @@ import com.generation.blogpessoal.util.TestBuilder;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.DisplayName.class)
 public class UsuarioControllerTest {
-	
+
 	@Autowired
 	private TestRestTemplate testRestTemplate;
-	
+
 	@Autowired
 	private UsuarioService usuarioService;
-	
+
 	@Autowired
 	private UsuarioRepository usuarioRepository;
-	
+
 	private static final String BASE_URL = "/usuarios";
 	private static final String USUARIO = "root@root.com";
-	private static final String SENHA= "rootroot";
-	
-	
+	private static final String SENHA = "rootroot";
+
 	@BeforeAll
 	void inicio() {
 		usuarioRepository.deleteAll();
 		usuarioService.cadastrarUsuario(TestBuilder.criarUsuario(null, "Root", USUARIO, SENHA));
 	}
-	
+
 	@Test
 	@DisplayName("01 - Deve Cadastrar um novo usuário com sucesso")
-	void deveCadastarUsuario(){
-		
-		// given 
-		Usuario usuario = TestBuilder.criarUsuario(null, "João Vitor",
-				"joaovitor@email.com", "jv12345678");
-		
-		// when 
+	void deveCadastarUsuario() {
+
+		// given
+		Usuario usuario = TestBuilder.criarUsuario(null, "João Vitor", "joaovitor@email.com", "jv12345678");
+
+		// when
 		// Corpo da Requisição
 		HttpEntity<Usuario> corpoRequisicao = new HttpEntity<Usuario>(usuario);
-		
+
 		// Enviar a Requisição
-		ResponseEntity<Usuario> resposta = testRestTemplate.exchange(
-				BASE_URL + "/cadastrar", HttpMethod.POST, corpoRequisicao, Usuario.class);
-		
-		// then 
-		
+		ResponseEntity<Usuario> resposta = testRestTemplate.exchange(BASE_URL + "/cadastrar", HttpMethod.POST,
+				corpoRequisicao, Usuario.class);
+
+		// then
+
 		assertEquals(HttpStatus.CREATED, resposta.getStatusCode());
 		assertNotNull(resposta.getBody());
-		
+
 	}
-	
+
 	@Test
 	@DisplayName("02 - Não Deve Cadastrar um usuário Duplicado")
-	void naoDeveCadastrarUsuarioDuplicado(){
+	void naoDeveCadastrarUsuarioDuplicado() {
 
-		usuarioService.cadastrarUsuario(TestBuilder.criarUsuario(null, "Luiza Guimarães",
-				"luizagui@email.com", "lugui12345678"));
-		
+		usuarioService.cadastrarUsuario(
+				TestBuilder.criarUsuario(null, "Luiza Guimarães", "luizagui@email.com", "lugui12345678"));
 
-		Usuario usuarioDuplicado = TestBuilder.criarUsuario(null, "Luiza Guimarães",
-				"luizagui@email.com", "lugui12345678");
-		
+		Usuario usuarioDuplicado = TestBuilder.criarUsuario(null, "Luiza Guimarães", "luizagui@email.com",
+				"lugui12345678");
 
 		HttpEntity<Usuario> corpoRequisicao = new HttpEntity<Usuario>(usuarioDuplicado);
 
-		ResponseEntity<Usuario> resposta = testRestTemplate.exchange(
-				BASE_URL + "/cadastrar", HttpMethod.POST, corpoRequisicao, Usuario.class);
-		
+		ResponseEntity<Usuario> resposta = testRestTemplate.exchange(BASE_URL + "/cadastrar", HttpMethod.POST,
+				corpoRequisicao, Usuario.class);
+
 		assertEquals(HttpStatus.BAD_REQUEST, resposta.getStatusCode());
-		
+
 	}
-	
+
 	@Test
 	@DisplayName("03 - Deve listar todos os usuarios")
-	void deveListarTodosUsuarios(){
-		
-		// given 
+	void deveListarTodosUsuarios() {
+
+		// given
 		usuarioService.cadastrarUsuario(TestBuilder.criarUsuario(null, "Kaue Dota", "kaue@email.com", "kaue1234"));
-		usuarioService.cadastrarUsuario(TestBuilder.criarUsuario(null, "Edson Nascimento", "edson@email.com", "edson1234"));
-		// when 
-		
+		usuarioService
+				.cadastrarUsuario(TestBuilder.criarUsuario(null, "Edson Nascimento", "edson@email.com", "edson1234"));
+		// when
+
 		String token = JwtHelper.obterToken(testRestTemplate, USUARIO, SENHA);
 		// Cabeçalho da Requisição
 		HttpEntity<Void> cabecalhoRequisicao = JwtHelper.criarRequisicaoComToken(token);
-		
+
 		// Enviar a Requisição
-		ResponseEntity<Usuario[]> resposta = testRestTemplate.exchange(
-				BASE_URL + "/all", HttpMethod.GET, cabecalhoRequisicao, Usuario[].class);
-		
-		// then 
-		
+		ResponseEntity<Usuario[]> resposta = testRestTemplate.exchange(BASE_URL + "/all", HttpMethod.GET,
+				cabecalhoRequisicao, Usuario[].class);
+
+		// then
+
 		assertEquals(HttpStatus.OK, resposta.getStatusCode());
 		assertNotNull(resposta.getBody());
-		
+
 	}
-	
+
 	@Test
 	@DisplayName("04 - Deve Atualizar os dados do usuário com sucesso")
 	void deveAtualizarUsuario() {
 		// Given
- 
+
 		// Objeto para fazer o cadastro
 		Usuario usuario = TestBuilder.criarUsuario(null, "Daniel", "daniel@email.com.br", "daniel1234");
- 
+
 		// Fiz o cadastro e guardei os dados objeto
 		Optional<Usuario> usuarioCadastrado = usuarioService.cadastrarUsuario(usuario);
- 
+
 		// Preparar o objeto com a atualização
 		Usuario usuarioUpdate = TestBuilder.criarUsuario(usuarioCadastrado.get().getId(), "Daniel Araujo",
 				"daniel_araujo@email.com.br", "abcd1234");
- 
+
 		// When
- 
+
 		// Obter o Token
 		String token = JwtHelper.obterToken(testRestTemplate, USUARIO, SENHA);
- 
+
 		// Cabeçalho da Requisição
 		HttpEntity<Usuario> cabecalhoRequisicao = JwtHelper.criarRequisicaoComToken(usuarioUpdate, token);
- 
-		
+
 		// Enviar a Requisição
 		ResponseEntity<Usuario> resposta = testRestTemplate.exchange(BASE_URL + "/atualizar", HttpMethod.PUT,
 				cabecalhoRequisicao, Usuario.class);
- 
+
 		// Then
- 
+
 		assertEquals(HttpStatus.OK, resposta.getStatusCode());
 		assertNotNull(resposta.getBody());
- 
+
 	}
-	
-	/**
-	 * @Test
+
+	@Test
 	@DisplayName("05 - Deve Listar um Usuario por ID")
 	void deveListarUsuarioPorID() {
-		
+
 		Optional<Usuario> usuarioSalvo = usuarioService.cadastrarUsuario(
-				TestBuilder.criarUsuario(null, "Daniel Araujo", "daniel_araujo@email.com.br", "abcd1234"));
-		
+				TestBuilder.criarUsuario(null, "Maria Joaquina", "maria_joaquina@email.com.br", "abcd1234"));
+
 		Long idBuscado = usuarioSalvo.get().getId();
+		String token = JwtHelper.obterToken(testRestTemplate, USUARIO, SENHA);
 		
-		ResponseEntity<Usuario> resposta = testRestTemplate.exchange(
-				BASE_URL + "/{id}" + idBuscado, HttpMethod.GET, null, Usuario.class);
-		
+		HttpEntity<Void> cabecalhoRequisicao = JwtHelper.criarRequisicaoComToken(token);
+
+		ResponseEntity<Usuario> resposta = testRestTemplate.exchange(BASE_URL + "/" + idBuscado, HttpMethod.GET,
+				cabecalhoRequisicao, Usuario.class);
+
 		assertEquals(HttpStatus.OK, resposta.getStatusCode());
-		assertEquals("Daniel Araujo", resposta.getBody().getNome());		
-	}****/ 
-	
+		assertEquals("Maria Joaquina", resposta.getBody().getNome()); // Buscar pelo Body 
+	}
+
 }
